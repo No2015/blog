@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .flex{
+            display: flex;
+            justify-content: space-between;
+            width: 880px;
+            height: 40px;
+            align-items: center;
+        }
+        .flex-1{
+            width: 40px;
+        }
+        .flex-2{
+            display: flex;
+            width: 800px;
+            align-items: center;
+        }
+        .flex-3{
+            width: 0;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .flex-4{
+            width: 200px;
+        }
+        .flip-list-move {
+            transition: transform 10s;
+        }
+        .fade-enter-active, .fade-leave-active {transition: all .5s;}
+        .fade-leave-active {position: absolute;transform: translateY(30px);}
+        .fade-enter, .fade-leave-to {opacity: 0;}
+        .fade-move {transition: transform .3s;}
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <div class="box" id="app">
+        <transition-group name="fade" tag="div">
+            <div class="flex" v-for="(item, key) in list" :key="item.name">
+                <div class="flex-1">{{ key+1 }}</div>
+                <div class="flex-1">{{ item.name }}</div>
+                <div class="flex-2">
+                    <div class="flex-3" :style="'width:' + (item.value / max * 500) + 'px'"></div>
+                    <div class="flex-4">{{ item.value.toFixed(0) }}({{ (item.value / all * 100).toFixed(0) }}%)</div>
+                </div>
+            </div>
+        </transition-group>
+    </div>
+    <script>
+    let lists = {};
+    let keys = [];
+    const App = new Vue({
+        el: '#app',
+        data(){
+            return {
+                items: [1,2,3,4,5,6,7,8,9],
+                lists: {},
+                list: [],
+                all: 0,
+                max: 0,
+                index: 0,
+                timer: null
+            }
+        },
+        created(){
+            this.createData();
+            this.calculate();
+        },
+        methods: {
+            createData(){
+                for(let i = 0; i < 12; i++){
+                    lists[i] = [];
+                    keys.push(i);
+                    for(let j = 0; j < 12; j++){
+                        let item = {
+                            name: String.fromCharCode(j+97),
+                            value: (Math.random() * 400).toFixed(0)*1
+                        };
+                        lists[i].push(item);
+                    }
+                }
+            },
+            calculate(){
+                let oldIndex = this.index;
+                let newIndex = oldIndex < keys.length - 1 ? oldIndex + 1 : 0;
+                let oldList = lists[keys[oldIndex]];
+                let newList = lists[keys[newIndex]];
+                let all = 0;
+                let max = 0;
+                let oldObj = {};
+                let newObj = {};
+                oldList.map(element => {
+                    oldObj[element.name] = element.value
+                });
+                newList.map(element => {
+                    newObj[element.name] = element.value
+                    all += element.value;
+                    max = element.value > max ? element.value : max;
+                });
+                this.all = all;
+                this.max = max;
+                this.tweenTo(oldObj, newObj);
+            },
+            tweenTo(oldObj, newObj){
+                let tempObj = {};
+                for(let key in oldObj){
+                    let oldItem = oldObj[key];
+                    let newItem = newObj[key];
+                    tempObj[key] = (oldItem - newItem) / 400;
+                }
+                let num = 0;
+                this.timer = setInterval(() => {
+                    let list = [];
+                    num ++
+                    for(let key in oldObj){
+                        let value = oldObj[key] + tempObj[key] * num
+                        let item = {
+                            name: key,
+                            value: value > 0 ? value : 0
+                        }
+                        list.push(item);
+                    }
+                    this.list = list.sort((a, b) => {
+                        return b.value - a.value
+                    });
+                    if(num > 400){
+                        clearInterval(this.timer);
+                        this.timer = null;
+                        this.run()
+                    }
+                }, 40)
+            },
+            run(){
+                this.index = this.index < keys.length - 1 ? this.index + 1 : 0;
+                this.calculate();
+            }
+        }
+    })
+    </script>
+</body>
+</html>
