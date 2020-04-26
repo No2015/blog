@@ -12,7 +12,7 @@ var ctx = c.getContext("2d");
 let paths = []
 for(let i = 0; i < 10; i++){
     let path = new Path2D()
-    let x = Math.random() * 10, y = Math.random() * 10;
+    let x = Math.random() * 100, y = Math.random() * 100;
     path.moveTo(x, y);
     let x1 = x + Math.random() * 100 + 100;
     path.lineTo(x1, y);
@@ -21,7 +21,8 @@ for(let i = 0; i < 10; i++){
     path.lineTo(x, y1);
     path.lineTo(x, y);
     path.closePath()
-    paths.push(path)
+    paths.push(path);
+    ctx.stroke(path);
 }
 c.addEventListener('mousemove', e => {
   let point = [e.offsetX, e.offsetY]
@@ -29,8 +30,11 @@ c.addEventListener('mousemove', e => {
   for(let i = 0; i < paths.length; i++){
   	let path = paths[i];
   	if(ctx.isPointInPath(path, ...point)){
-    	ctx.stroke(path);
+    	ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    }else{
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
     }
+    ctx.stroke(path);
   }
 })
 </script> 
