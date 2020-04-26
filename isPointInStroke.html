@@ -31,7 +31,7 @@ c.addEventListener('mousemove', e => {
   let state = false;
   for(let i = paths.length - 1; i >= 0; i--){
   	let path = paths[i];
-  	if(!state && ctx.isPointInStroke(path, ...point)){
+  	if(!state && isPointInStroke(ctx,path,point)){
         ctx.strokeStyle = 'red';
         state = true;
     }else{
@@ -40,6 +40,20 @@ c.addEventListener('mousemove', e => {
     ctx.stroke(path);
   }
 })
+    
+function isPointInStroke(ctx,path,point){
+    let [x, y] = point
+    let state = false;
+    for(let i = x - 1; i <= x + 1; i++){
+        for(let j = y - 1; j <= y + 1; j++){
+            if(ctx.isPointInStroke(path, i, j)){
+                state = true;
+                break;
+            }
+        }
+    }
+    return state
+}    
 </script> 
 
 </body>
