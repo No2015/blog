@@ -15,9 +15,9 @@ for(let i = 0; i < 10; i++){
     let path = new Path2D()
     let x = Math.random() * 100, y = Math.random() * 100;
     path.moveTo(x, y);
-    let x1 = x + Math.random() * 100 + 100;
+    let x1 = x + Math.random() * 150 + 50;
     path.lineTo(x1, y);
-    let y1 = y + Math.random() * 100 + 100;
+    let y1 = y + Math.random() * 150 + 50;
     path.lineTo(x1, y1);
     path.lineTo(x, y1);
     path.lineTo(x, y);
@@ -28,10 +28,12 @@ for(let i = 0; i < 10; i++){
 c.addEventListener('mousemove', e => {
   let point = [e.offsetX, e.offsetY]
   ctx.clearRect(0,0,300,300);
-  for(let i = 0; i < paths.length; i++){
+  let state = false;
+  for(let i = paths.length; i > 0; i--){
   	let path = paths[i];
-  	if(ctx.isPointInPath(path, ...point)){
+  	if(!state && ctx.isPointInPath(path, ...point)){
         ctx.strokeStyle = 'red';
+        state = true;
     }else{
     	ctx.strokeStyle = 'rgba(0,0,0,0.2)';
     }
