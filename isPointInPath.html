@@ -29,7 +29,7 @@ c.addEventListener('mousemove', e => {
   let point = [e.offsetX, e.offsetY]
   ctx.clearRect(0,0,300,300);
   let state = false;
-  for(let i = paths.length; i > 0; i--){
+  for(let i = paths.length - 1; i >= 0; i--){
   	let path = paths[i];
   	if(!state && ctx.isPointInPath(path, ...point)){
         ctx.strokeStyle = 'red';
