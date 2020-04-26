@@ -9,6 +9,7 @@ Your browser does not support the HTML5 canvas tag.
 <script>
 var c = document.getElementById("myCanvas");
 var ctx = c.getContext("2d");
+ctx.strokeStyle = 'rgba(0,0,0,0.2)';
 let paths = []
 for(let i = 0; i < 10; i++){
     let path = new Path2D()
@@ -32,7 +33,7 @@ c.addEventListener('mousemove', e => {
   	if(ctx.isPointInPath(path, ...point)){
     	ctx.strokeStyle = 'rgba(0,0,0,0.2)';
     }else{
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.strokeStyle = 'red';
     }
     ctx.stroke(path);
   }
