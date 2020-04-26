@@ -11,7 +11,7 @@ var c = document.getElementById("myCanvas");
 var ctx = c.getContext("2d");
 let paths = []
 for(let i = 0; i < 10; i++){
-	let path = new Path2D()
+    let path = new Path2D()
     let x = Math.random() * 10, y = Math.random() * 10;
     path.moveTo(x, y);
     let x1 = x + Math.random() * 100 + 100;
