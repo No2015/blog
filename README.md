@@ -3,4 +3,4 @@
 
 [arc](https://no2015.github.io/blog/arc.html)
 
-[isPointInPath](https://no2015.github.io/isPointInPath.html)
+[isPointInPath](https://no2015.github.io/blog/isPointInPath.html)
