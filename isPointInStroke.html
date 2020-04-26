@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="300" height="300" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script>
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+let paths = []
+for(let i = 0; i < 10; i++){
+    let path = new Path2D()
+    let x = Math.random() * 100, y = Math.random() * 100;
+    path.moveTo(x, y);
+    let x1 = x + Math.random() * 150 + 50;
+    path.lineTo(x1, y);
+    let y1 = y + Math.random() * 150 + 50;
+    path.lineTo(x1, y1);
+    path.lineTo(x, y1);
+    path.lineTo(x, y);
+    path.closePath()
+    paths.push(path);
+    ctx.stroke(path);
+}
+c.addEventListener('mousemove', e => {
+  let point = [e.offsetX, e.offsetY]
+  ctx.clearRect(0,0,300,300);
+  let state = false;
+  for(let i = paths.length - 1; i >= 0; i--){
+  	let path = paths[i];
+  	if(!state && ctx.isPointInStroke(path, ...point)){
+        ctx.strokeStyle = 'red';
+        state = true;
+    }else{
+    	ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    }
+    ctx.stroke(path);
+  }
+})
+</script> 
+
+</body>
+</html>
