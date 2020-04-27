@@ -6,3 +6,5 @@
 [isPointInPath](https://no2015.github.io/blog/isPointInPath.html)
 
 [isPointInStroke](https://no2015.github.io/blog/isPointInStroke.html)
+
+[clip](https://no2015.github.io/blog/clip.html)
