@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas2" width="300" height="150" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<script>
+var c=document.getElementById("myCanvas2");
+var ctx=c.getContext("2d");
+//保存当前路径
+ctx.save();
+//开始绘画裁剪区域
+ctx.beginPath();
+ctx.moveTo(10,10);
+ctx.lineTo(20,30);
+ctx.lineTo(30,60);
+ctx.lineTo(60,30);
+ctx.lineTo(10,10);
+//结束绘画裁剪区域
+ctx.closePath();
+//裁剪
+ctx.clip();
+//填充裁剪区域
+ctx.fillStyle="green";
+ctx.fillRect(0,0,300,150);
+//返回路径
+ctx.restore();
+
+//保存当前路径
+ctx.save();
+//开始绘画裁剪区域
+ctx.beginPath();
+ctx.moveTo(100,100);
+ctx.lineTo(120,130);
+ctx.lineTo(130,140);
+ctx.lineTo(160,130);
+ctx.lineTo(100,100);
+//结束绘画裁剪区域
+ctx.closePath();
+//裁剪
+ctx.clip();
+//填充裁剪区域
+ctx.fillStyle="red";
+ctx.fillRect(0,0,300,150);
+//返回路径
+ctx.restore();
+</script> 
+
+</body>
+</html>
