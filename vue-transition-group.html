@@ -32,17 +32,18 @@
         .flip-list-move {
             transition: transform 10s;
         }
-        .fade-enter-active, .fade-leave-active {transition: all .5s;}
+        .flex-item {transition: all .5s;}
+        /*.fade-enter-active, .fade-leave-active {transition: all .5s;}*/
         .fade-leave-active {position: absolute;transform: translateY(30px);}
         .fade-enter, .fade-leave-to {opacity: 0;}
-        .fade-move {transition: transform .3s;}
+        /*.fade-move {transition: transform .3s;}*/
     </style>
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <div class="box" id="app">
         <transition-group name="fade" tag="div">
-            <div class="flex" v-for="(item, key) in list" :key="item.name">
+            <div class="flex flex-item" v-for="(item, key) in list" :key="item.name">
                 <div class="flex-1">{{ key+1 }}</div>
                 <div class="flex-1">{{ item.name }}</div>
                 <div class="flex-2">
