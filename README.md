@@ -9,4 +9,4 @@
 
 [clip](https://no2015.github.io/blog/clip.html)
 
-[camare](https://no2015.github.io/blog/camare.html)
+[camera](https://no2015.github.io/blog/camera.html)
