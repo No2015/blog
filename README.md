@@ -8,3 +8,5 @@
 [isPointInStroke](https://no2015.github.io/blog/isPointInStroke.html)
 
 [clip](https://no2015.github.io/blog/clip.html)
+
+[camare](https://no2015.github.io/blog/camare.html)
