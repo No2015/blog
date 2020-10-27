@@ -1,65 +1,51 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="utf-8">
-<title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
-<script src="https://unpkg.com/vue/dist/vue.js"></script>
-	<style type="text/css">
-		#xb-ring{
-			transition: all 2s;
-		}
-	</style>
+    <meta charset="utf-8">
+    <title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <style type="text/css">
+        #xb-ring {
+            transition: all 2s;
+        }
+    </style>
 </head>
+
 <body>
-<div id="app">
-  <svg :style="{
+    <div id="app">
+        <svg :style="{
 		background: '#000',
         width:size + 'px',
         height:size + 'px'
-  }"> 
-	<circle 
-		xb-ring="circle" 
-		:cx="r + lineWidth" 
-		:cy="r + lineWidth" 
-		:r="r" 
-		stroke-linecap="round" 
-		fill="none" 
-		:stroke-width="lineWidth" 
-		:stroke-dasharray="Math.PI * r * 2"
-		:stroke-dashoffset="(100 - percent) * Math.PI * r * 2 / 100"
-		stroke="green" 
-	/>
-  </svg>
-</div>
+  }">
+            <circle xb-ring="circle" :cx="r + lineWidth" :cy="r + lineWidth" :r="r" stroke-linecap="round" fill="none"
+                :stroke-width="lineWidth" :stroke-dasharray="Math.PI * r * 2"
+                :stroke-dashoffset="(100 - percent) * Math.PI * r * 2 / 100" stroke="green" />
+        </svg>
+    </div>
 
-<script>
-let vm = new Vue({
-  el: '#app',
-  data: {
-    message: 'Hello Vue.js!',
-	  size: 120,
-	  color: '#ff5a0c',
-	  percent: 75,
-	  showUnit: true,
-	  fontSize: 24
-  },
-computed: {
-  lineWidth(){
-	return this.size / 30
-  },
-  r(){
-	return (this.size - this.lineWidth * 2) / 2
-  },
-  innerPath(){
-	return `
-			M${this.size / 2},${this.size / 2}
-			m${0},${-this.r},
-			a${this.r},${this.r},0,1,1,0,${2 * this.r}
-			a${this.r},${this.r},0,1,1,0,${-2 * this.r}
-		`
-  }
-}
-})
-</script>
+    <script>
+        let vm = new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello Vue.js!',
+                size: 120,
+                color: '#ff5a0c',
+                percent: 75,
+                showUnit: true,
+                fontSize: 24
+            },
+            computed: {
+                lineWidth() {
+                    return this.size / 30
+                },
+                r() {
+                    return (this.size - this.lineWidth * 2) / 2
+                }
+            }
+        })
+    </script>
 </body>
+
 </html>
