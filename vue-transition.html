@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .num {transition: all .5s;}
+        .run-enter {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        .run-leave-to {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        .run-leave-active {
+          position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <div  id="app">
+        <transition name="run" tag="div">
+            <div class="num" :key="num">{{ num }}</div>
+        </transition-group>
+    </div>
+    <script>
+    const App = new Vue({
+        el: '#app',
+        data(){
+            return {
+                num: 0,
+                timer: null
+            }
+        },
+        created(){
+            this.run();
+        },
+        methods: {
+            run(){
+                this.timer = setInterval(() => {
+                    this.num ++
+                }, 1e3)
+            }
+        }
+    })
+    </script>
+</body>
+</html>
