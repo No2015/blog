@@ -1,6 +1,8 @@
 # blog
 [vue-transition-group](https://no2015.github.io/blog/vue-transition-group.html)
 
+[vue-transition](https://no2015.github.io/blog/vue-transition.html)
+
 [arc](https://no2015.github.io/blog/arc.html)
 
 [isPointInPath](https://no2015.github.io/blog/isPointInPath.html)
