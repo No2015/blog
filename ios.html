@@ -24,11 +24,17 @@
             height: 300px;
             background: #666;
         }
+        #test {
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
     </style>
 </head>
 
 <body>
     <div class="page">
+        <textarea name="test" id="test" cols="15" rows="2"></textarea>
         <div class="item1"></div>
         <div class="item2"></div>
         <div class="item1"></div>
@@ -46,6 +52,7 @@
         });
         $('body').on('touchmove', function (e) {
             endY = e.touches[0].pageY;  //记录手指触摸的移动中的坐标
+            $('#test').val(endY)
             //手指下滑，页面到达顶端不能继续下滑
             if (endY > startY && $(window).scrollTop() <= 0) {
                 e.preventDefault();
