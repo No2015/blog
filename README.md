@@ -14,3 +14,5 @@
 [camera](https://no2015.github.io/blog/camera.html)
 
 [vue-svg-ring](https://no2015.github.io/blog/vue-svg-ring.html)
+
+[ios](https://no2015.github.io/blog/ios.html)
