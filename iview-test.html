@@ -1,34 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>iview test</title>
-    <style>
-    </style>
+    <meta charset="utf-8">
+    <title>iview example</title>
+    <link rel="stylesheet" type="text/css" href="http://unpkg.com/iview/dist/styles/iview.css">
+    <script type="text/javascript" src="http://vuejs.org/js/vue.min.js"></script>
+    <script type="text/javascript" src="http://unpkg.com/iview/dist/iview.min.js"></script>
 </head>
 <body>
-<!-- import Vue.js -->
-<script src="//vuejs.org/js/vue.min.js"></script>
-<!-- import stylesheet -->
-<link rel="stylesheet" href="//unpkg.com/iview/dist/styles/iview.css">
-<!-- import iView -->
-<script src="//unpkg.com/iview/dist/iview.min.js"></script>
-    <div  id="app">
-        <DatePicker format="yyyy/MM/dd" type="daterange" placement="bottom-end" placeholder="Select date" style="width: 200px"></DatePicker>
+<div id="app">
+    <div style="padding-left: 300px">
+        <DatePicker type="daterange" placement="bottom-end" placeholder="Select date" style="width: 200px"></DatePicker>
     </div>
-    <script>
-    const App = new Vue({
+</div>
+<script>
+    new Vue({
         el: '#app',
-        data(){
-            return {}
-        },
-        created(){
+        data: {
         },
         methods: {
         }
     })
-    </script>
+  </script>
 </body>
 </html>
