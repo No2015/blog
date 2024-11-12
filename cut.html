@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<style>
+			.box {
+				position: absolute;
+				top: 60px;
+			}
+			.canvas {
+				display: block;
+			}
+			.box-mask {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				top: 0;
+				left: 100%;
+			}
+			.item-img {
+				position: absolute;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="box">
+			<canvas
+				class="canvas"
+				id="cut-canvas"
+				width="354"
+				height="354"
+				style="width: 354px; height: 354px"
+			></canvas>
+			<div class="box-mask" id="mask"></div>
+		</div>
+		<div>
+			<input type="text" id="myTxt" value="恰似一江春水向东流" />
+			<button onclick="start(1)">文字</button>
+		</div>
+		<div>
+			<input type="number" id="myNum" value="5" />
+			<button onclick="start(2)">图片</button>
+		</div>
+		<script>
+			function start(type) {
+				const img = type == 1 ? "" : "/blog/assets/2dmarker-test.jpg";
+				const txt = type == 2 ? "" : document.querySelector("#myTxt").value; //向东流，恰似一江春水向东流
+				const size = document.querySelector("#myNum").value;
+				const ready = false;
+				const cut = new Cut(img, txt, size, ready);
+			}
+			class Cut {
+				txt = "";
+				img = "";
+				temp = "";
+				size = 15;
+				opens = [];
+				ready = false;
+				txtBgSrc = "/blog/assets/cut/txt-bg.png";
+				list = [];
+				constructor(img, txt, size, ready) {
+					if (this.timer) {
+						return false;
+					}
+					this.timer = setTimeout(() => {
+						clearInterval(this.timer);
+						this.timer = null;
+					}, 100);
+					this.img = img;
+					this.txt = txt;
+					this.size = txt ? txt.length : size;
+					const opens = [];
+					for (let i = 0; i < this.size; i++) {
+						opens.push(i + 1);
+					}
+					this.opens = opens;
+					this.ready = ready;
+					this.init();
+					return false;
+				}
+				/**
+				 * 成功
+				 */
+				success() {
+					console.log(">>>", this.list);
+					const mask = document.querySelector("#mask");
+					let html = "";
+					this.list.forEach((el) => {
+						html += `<img src="${el.dataUrl}" class="item-img" style="width: ${el.width}%; height: ${el.height}%; left: ${el.x}%; top: ${el.y}%;" />`;
+					});
+					mask.innerHTML = html;
+				}
+
+				/**
+				 * 初始化
+				 */
+				init() {
+					this.temp = `/blog/assets/cut/${this.size}.png?v=111`;
+					// 通过 SelectorQuery 获取 Canvas 节点
+					this.start = Date.now();
+					const canvas = document.querySelector("#cut-canvas");
+
+					if (canvas) {
+						this.canvas = canvas;
+						this.ctx = canvas.getContext("2d");
+						this.dimWidth = 360;
+						this.dimHeight = 360;
+						this.setTemp();
+					}
+
+					return false;
+				}
+				/**
+				 * 设置temp 图片上图
+				 */
+				setTemp() {
+					const ctx = this.ctx;
+					const canvas = this.canvas;
+
+					const img = new Image();
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					img.onload = () => {
+						this.width = canvas.width = img.width;
+						this.height = canvas.height = img.height;
+						ctx.drawImage(img, 0, 0, this.width, this.height);
+						this.tempEnd();
+					};
+					img.src = this.temp;
+				}
+				/**
+				 * temp上图完成
+				 */
+				async tempEnd() {
+					const ctx = this.ctx;
+					/**
+					 * 模板像素点数据
+					 */
+					this.tempData = ctx.getImageData(0, 0, this.width, this.height);
+
+					ctx.clearRect(0, 0, this.width, this.height);
+					ctx.fillStyle = "#ffffff";
+					ctx.fillRect(0, 0, this.width, this.height);
+					/**
+					 * 灰色遮罩像素点数据
+					 */
+					this.maskData = ctx.getImageData(0, 0, this.width, this.height);
+					if (this.ready) {
+						this.renderReadonly();
+					} else {
+						if (this.img) {
+							await this.setImg();
+							this.starCut();
+						} else if (this.txt) {
+							await this.setTxtBg();
+							this.renderTxt();
+							this.starCut();
+						} else {
+							console.warn(">>>请传入图片或者文字");
+						}
+					}
+				}
+				/**
+				 * 只读渲染背景和遮罩
+				 */
+				renderReadonly() {
+					//只读
+					for (let i = 0; i < this.tempData.data.length; i += 4) {
+						const temp = this.tempData.data.slice(i, i + 4);
+						const opacity = temp[3];
+						if (opacity > 0) {
+							const index = Math.round(opacity / 13);
+							this.maskData.data[i + 0] = 227;
+							this.maskData.data[i + 1] = 227;
+							this.maskData.data[i + 2] = 227;
+							this.maskData.data[i + 3] = this.opens.find(
+								(open) => open === index
+							)
+								? 0
+								: 255;
+						}
+					}
+					this.setMaskToCanvas();
+					const list = [];
+					for (let i = 0; i < this.size; i++) {
+						list.push({
+							i,
+						});
+					}
+					this.list = list;
+					this.success();
+				}
+				/**
+				 * 设置img 图片上图
+				 */
+				async setImg() {
+					return new Promise((resolve) => {
+						const ctx = this.ctx;
+						const canvas = this.canvas;
+						const img = new Image();
+						ctx.clearRect(0, 0, this.width, this.height);
+						img.onload = () => {
+							ctx.drawImage(img, 0, 0, this.width, this.height);
+							resolve(true);
+						};
+						img.src = this.img;
+					});
+				}
+				/**
+				 * 设置txtBg 文字背景上图
+				 */
+				async setTxtBg() {
+					return new Promise((resolve) => {
+						const ctx = this.ctx;
+						const canvas = this.canvas;
+						const img = new Image();
+						ctx.clearRect(0, 0, this.width, this.height);
+						img.onload = () => {
+							this.txtBgImg = img;
+							ctx.drawImage(img, 0, 0, this.width, this.height);
+							resolve(true);
+						};
+						img.src = this.txtBgSrc;
+					});
+				}
+				/**
+				 * 渲染文字
+				 */
+				renderTxt() {
+					const ctx = this.ctx;
+					// ctx.fillStyle = '#ffffff'
+					// ctx.fillRect(0, 0, this.width, this.height)
+					// ctx.font="30px Arial";
+					// ctx.fillStyle = '#ff5a0c'
+					// ctx.fillText(this.txt, 10, 50);
+					const abs = this.getAbs();
+					// console.log(abs)
+					abs.forEach((el) => {
+						ctx.font = el.font;
+						ctx.fillStyle = "#000";
+						ctx.fillText(el.txt, el.left, el.top);
+					});
+				}
+				/**
+				 * 获取文字定位大小
+				 */
+				getAbs() {
+					let abs = [];
+					switch (this.size) {
+						case 2: {
+							const width = this.width;
+							const height = this.height;
+							const row = 1;
+							const col = 2;
+							const w = width / col;
+							const h = height / row;
+							const font = "50px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 25 + (index === 1 ? 30 : 0);
+									const top = h * (i + 0.5) + 25;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+
+							break;
+						}
+						case 3: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 2;
+							const w = width / col;
+							const h = height / row;
+							const font = "50px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 3) {
+										const left =
+											w * (j + 0.5) - 25 + (index === 2 ? 0.5 * w : 0);
+										const top = h * (i + 0.5) + 25;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 4: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 2;
+							const w = width / col;
+							const h = height / row;
+							const font = "50px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 25;
+									const top = h * (i + 0.5) + 25;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 5: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 3;
+							const w = width / col;
+							const h = height / row;
+							const font = "48px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 5) {
+										const left = w * (j + 0.5) - 24;
+										const top =
+											h * (i + 0.5) + 24 + (index === 2 ? 0.5 * h : 0);
+										let _index = index;
+										if (index === 2) {
+											_index = 4;
+										} else if (index > 2) {
+											_index = index - 1;
+										}
+										const txt = this.txt.substring(_index, _index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 6: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 3;
+							const w = width / col;
+							const h = height / row;
+							const font = "44px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 22;
+									const top = h * (i + 0.5) + 22;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 7: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 7) {
+										const left =
+											w * (j + 0.5) - 20 + (index > 3 && index < 6 ? -10 : 0);
+										const top =
+											h * (i + 0.5) + 20 + (index === 3 ? 0.5 * h : 0);
+										let _index = index;
+										if (index === 3) {
+											_index = 6;
+										} else if (index > 3) {
+											_index = index - 1;
+										}
+										const txt = this.txt.substring(_index, _index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 8: {
+							const width = this.width;
+							const height = this.height;
+							const row = 2;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left =
+										w * (j + 0.5) -
+										20 +
+										(index % 4 === 3 ? 10 : index > 3 && index < 6 ? -10 : 0);
+									const top = h * (i + 0.5) + 20;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 9: {
+							const width = this.width;
+							const height = this.height;
+							const row = 3;
+							const col = 3;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 20;
+									const top = h * (i + 0.5) + 20;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 10: {
+							const width = this.width;
+							const height = this.height;
+							const row = 3;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 10) {
+										const left =
+											w * (j + 0.5) -
+											20 +
+											(index === 7 ? -w : index === 3 ? 10 : 0);
+										const top =
+											h * (i + 0.5) + 20 + (index === 3 || index === 7 ? h : 0);
+										let _index = index;
+										if (index === 3) {
+											_index = 9;
+										} else if (index > 3 && index < 7) {
+											_index = index - 1;
+										} else if (index === 7) {
+											_index = 8;
+										} else if (index > 7) {
+											_index = index - 2;
+										}
+										const txt = this.txt.substring(_index, _index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 11: {
+							const width = this.width;
+							const height = this.height;
+							const row = 3;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 11) {
+										const left = w * (j + 0.5) - 20;
+										const top =
+											h * (i + 0.5) + 20 + (index === 7 ? 0.5 * h : 0);
+										let _index = index;
+										if (index === 7) {
+											_index = 10;
+										} else if (index > 7) {
+											_index = index - 1;
+										}
+										const txt = this.txt.substring(_index, _index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 12: {
+							const width = this.width;
+							const height = this.height;
+							const row = 3;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 20 + (index % 4 === 3 ? 8 : 0);
+									const top = h * (i + 0.5) + 20;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 13: {
+							const width = this.width;
+							const height = this.height;
+							const row = 4;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 13) {
+										const left =
+											w * (j + 0.5) - 20 + (index === 12 ? 1.5 * h : 0);
+										const top = h * (i + 0.5) + 20;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 14: {
+							const width = this.width;
+							const height = this.height;
+							const row = 4;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 14) {
+										const left = w * (j + 0.5) - 20 + (index === 13 ? h : 0);
+										const top = h * (i + 0.5) + 20;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 15: {
+							const width = this.width;
+							const height = this.height;
+							const row = 4;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 15) {
+										const left =
+											w * (j + 0.5) - 20 + (index === 14 ? 0.5 * h : 0);
+										const top = h * (i + 0.5) + 20;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 16: {
+							const width = this.width;
+							const height = this.height;
+							const row = 4;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 20;
+									const top = h * (i + 0.5) + 20;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						case 17: {
+							const width = this.width;
+							const height = this.height;
+							const row = 5;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 17) {
+										const left =
+											w * (j + 0.5) - 18 + (index === 16 ? 2 * h : 0);
+										const top = h * (i + 0.5) + 16;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 18: {
+							const width = this.width;
+							const height = this.height;
+							const row = 5;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 18) {
+										const left =
+											w * (j + 0.5) -
+											18 +
+											(index === 16 ? 0.5 * h : index === 17 ? 2 * h : 0);
+										const top = h * (i + 0.5) + 16;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 19: {
+							const width = this.width;
+							const height = this.height;
+							const row = 5;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "40px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									if (index < 19) {
+										const left =
+											w * (j + 0.5) - 18 + (index === 18 ? 0.5 * h : 0);
+										const top = h * (i + 0.5) + 16;
+										const txt = this.txt.substring(index, index + 1);
+										abs.push({
+											left,
+											top,
+											font,
+											txt,
+										});
+									}
+								}
+							}
+							break;
+						}
+						case 20: {
+							const width = this.width;
+							const height = this.height;
+							const row = 5;
+							const col = 4;
+							const w = width / col;
+							const h = height / row;
+							const font = "36px Arial";
+							for (let i = 0; i < row; i++) {
+								for (let j = 0; j < col; j++) {
+									const index = i * col + j;
+									const left = w * (j + 0.5) - 18;
+									const top = h * (i + 0.5) + 16;
+									const txt = this.txt.substring(index, index + 1);
+									abs.push({
+										left,
+										top,
+										font,
+										txt,
+									});
+								}
+							}
+							break;
+						}
+						default: {
+						}
+					}
+					return abs;
+				}
+				/**
+				 * 开始裁剪
+				 */
+				starCut() {
+					const ctx = this.ctx;
+					/**
+					 * 裁剪对象像素点数据
+					 */
+					this.imgData = ctx.getImageData(0, 0, this.width, this.height);
+					/**
+					 * 降噪后的模板像素点数据
+					 */
+					this.newTempData = ctx.createImageData(this.width, this.height);
+
+					const size = this.size;
+					const list = [];
+					for (let i = 0; i < size; i++) {
+						this.cut(i + 1, list);
+					}
+					this.setMaskToCanvas();
+					this.end = Date.now();
+					console.log(">>> time", this.end - this.start);
+					this.list = list;
+					this.success();
+				}
+				/**
+				 * 设置灰色遮罩
+				 */
+				async setMaskToCanvas() {
+					const ctx = this.ctx;
+					const canvas = this.canvas;
+					canvas.width = this.width;
+					canvas.height = this.height;
+					// 清除画布并绘制裁剪后的图像
+					ctx.clearRect(0, 0, this.width, this.height);
+					// ctx.putImageData(this.maskData, 0, 0);
+					if (this.txt) {
+						if (!this.txtBgImg) {
+							await this.setTxtBg();
+						}
+						ctx.drawImage(this.txtBgImg, 0, 0, this.width, this.height);
+						this.renderTxt();
+						const txtData = ctx.getImageData(0, 0, this.width, this.height);
+						for (let i = 0; i < txtData.data.length; i += 4) {
+							if (this.maskData.data[i + 3]) {
+								txtData.data[i + 0] = this.maskData.data[i + 0];
+								txtData.data[i + 1] = this.maskData.data[i + 1];
+								txtData.data[i + 2] = this.maskData.data[i + 2];
+								txtData.data[i + 3] = this.maskData.data[i + 3];
+							}
+						}
+						ctx.putImageData(txtData, 0, 0);
+					} else {
+						ctx.putImageData(this.imgData, 0, 0);
+						const imgData = ctx.getImageData(0, 0, this.width, this.height);
+						for (let i = 0; i < imgData.data.length; i += 4) {
+							if (this.maskData.data[i + 3]) {
+								imgData.data[i + 0] = this.maskData.data[i + 0];
+								imgData.data[i + 1] = this.maskData.data[i + 1];
+								imgData.data[i + 2] = this.maskData.data[i + 2];
+								imgData.data[i + 3] = this.maskData.data[i + 3];
+							}
+						}
+						ctx.putImageData(imgData, 0, 0);
+					}
+				}
+				/**
+				 * 裁剪
+				 * @param index 序号
+				 * @param list 存储列表
+				 */
+				cut(index, list) {
+					const ctx = this.ctx;
+					const canvas = this.canvas;
+					const newData = ctx.createImageData(this.width, this.height);
+					for (let i = 0; i < newData.data.length; i += 4) {
+						const temp = this.tempData.data.slice(i, i + 4);
+						const opacity = temp[3];
+						if (opacity > 0 && Math.round(opacity / 13) === index) {
+							newData.data[i + 0] = this.imgData.data[i + 0];
+							newData.data[i + 1] = this.imgData.data[i + 1];
+							newData.data[i + 2] = this.imgData.data[i + 2];
+							newData.data[i + 3] = this.imgData.data[i + 3];
+						}
+					}
+					// 进行连通域标记
+					const labels = this.connectedComponentLabeling(
+						newData.data,
+						this.width,
+						this.height
+					);
+					const areaCounts = this.countAreas(labels, this.width, this.height);
+
+					// 设定一个阈值来移除小的连通域
+					const thresholdArea = 300; // 设定一个合理的阈值
+
+					console.log(">>> areaCounts", areaCounts);
+
+					// 应用面积过滤
+					for (let y = 0; y < this.height; y++) {
+						for (let x = 0; x < this.width; x++) {
+							const index = y * this.width + x;
+							const label = labels[index];
+							if (areaCounts[label] < thresholdArea) {
+								newData.data[index * 4 + 3] = 0; // 移除小面积区域
+							}
+						}
+					}
+
+					// 重新确定边界
+					let minX = this.width;
+					let minY = this.height;
+					let maxX = -1;
+					let maxY = -1;
+
+					// 遍历所有像素，查找非透明像素的位置
+					for (let y = 0; y < this.height; y++) {
+						for (let x = 0; x < this.width; x++) {
+							const pixelIndex = (y * this.width + x) * 4;
+							if (newData.data[pixelIndex + 3] > 0) {
+								// Alpha通道大于0表示非透明
+								this.maskData.data[pixelIndex + 0] = 227;
+								this.maskData.data[pixelIndex + 1] = 227;
+								this.maskData.data[pixelIndex + 2] = 227;
+								this.maskData.data[pixelIndex + 3] = this.opens.find(
+									(open) => open === index
+								)
+									? 0
+									: 255;
+								this.newTempData.data[pixelIndex + 3] = index * 13;
+								minX = Math.min(minX, x);
+								maxX = Math.max(maxX, x);
+								minY = Math.min(minY, y);
+								maxY = Math.max(maxY, y);
+							}
+						}
+					}
+
+					// 如果没有找到非透明像素，则直接返回
+					if (minX === this.width && minY === this.height) {
+						console.log("No non-transparent pixels found.");
+						return;
+					}
+
+					const width = maxX - minX + 1;
+					const height = maxY - minY + 1;
+					canvas.width = width;
+					canvas.height = height;
+
+					// 创建新的图像数据对象用于裁剪后的图像
+					const croppedImage = ctx.createImageData(width, height);
+
+					// 复制非透明像素到新的图像数据中
+					for (let y = minY; y <= maxY; y++) {
+						for (let x = minX; x <= maxX; x++) {
+							const srcIndex = (y * this.width + x) * 4;
+							const destIndex =
+								((y - minY) * (maxX - minX + 1) + (x - minX)) * 4;
+							croppedImage.data.set(
+								newData.data.subarray(srcIndex, srcIndex + 4),
+								destIndex
+							);
+						}
+					}
+
+					// 清除画布并绘制裁剪后的图像
+					ctx.clearRect(0, 0, width, height);
+					ctx.putImageData(croppedImage, 0, 0);
+
+					const dataUrl = canvas.toDataURL("image/png");
+					list.push({
+						x: ((minX / this.width) * 100).toFixed(2),
+						y: ((minY / this.height) * 100).toFixed(2),
+						width: ((width / this.width) * 100).toFixed(2),
+						height: ((height / this.height) * 100).toFixed(2),
+						dataUrl,
+					});
+				}
+				/**
+				 * 对给定的图像数据执行连通域标记算法。
+				 * @param {Uint8ClampedArray} data 图像数据。
+				 * @param {number} width 图像宽度。
+				 * @param {number} height 图像高度。
+				 * @returns {Array<number>} 包含每个像素所属连通域标签的一维数组。
+				 */
+				connectedComponentLabeling(data, width, height) {
+					const labels = new Array(width * height).fill(0); // 初始化标签数组
+					let nextLabel = 1; // 下一个可用的标签值
+
+					function dfs(x, y, label) {
+						const stack = [[x, y]];
+						while (stack.length > 0) {
+							const [cx, cy] = stack.pop();
+							if (
+								cx < 0 ||
+								cy < 0 ||
+								cx >= width ||
+								cy >= height ||
+								data[cy * width * 4 + cx * 4 + 3] === 0 ||
+								labels[cy * width + cx] !== 0
+							) {
+								continue;
+							}
+							labels[cy * width + cx] = label;
+							stack.push([cx - 1, cy]); // 左
+							stack.push([cx + 1, cy]); // 右
+							stack.push([cx, cy - 1]); // 上
+							stack.push([cx, cy + 1]); // 下
+						}
+					}
+
+					for (let y = 0; y < height; y++) {
+						for (let x = 0; x < width; x++) {
+							const index = y * width + x;
+							if (data[index * 4 + 3] > 0 && labels[index] === 0) {
+								// 如果当前像素不是透明且未标记
+								dfs(x, y, nextLabel); // 标记连通域
+								nextLabel++;
+							}
+						}
+					}
+
+					return labels;
+				}
+
+				/**
+				 * 计算每个连通域的面积。
+				 * @param {Array<number>} labels 每个像素所属连通域的标签数组。
+				 * @param {number} width 图像宽度。
+				 * @param {number} height 图像高度。
+				 * @returns {Object} 包含每个连通域面积的对象。
+				 */
+				countAreas(labels, width, height) {
+					const areaCounts = {};
+					for (let y = 0; y < height; y++) {
+						for (let x = 0; x < width; x++) {
+							const index = y * width + x;
+							const label = labels[index];
+							if (label > 0) {
+								areaCounts[label] = (areaCounts[label] || 0) + 1;
+							}
+						}
+					}
+					return areaCounts;
+				}
+			}
+		</script>
+	</body>
+</html>
